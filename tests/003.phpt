@@ -11,6 +11,8 @@ var_dump($s->getPath('ab\Dummy'));
 var_dump($s->getPath('Dum_my'));
 var_dump($s->getPath('ab\cd_\D_um_my'));
 var_dump($s->getPath('ab\cd_\_D_um_my'));
+var_dump($s->getPath('D_ummy_'));
+var_dump($s->getPath(''));
 
 echo "\n";
 
@@ -64,6 +66,8 @@ string(12) "ab/Dummy.php"
 string(10) "Dum/my.php"
 string(18) "ab/cd_/D/um/my.php"
 string(19) "ab/cd_//D/um/my.php"
+string(11) "D/ummy/.php"
+bool(false)
 
 string(17) "path/to/Dummy.php"
 string(20) "path/to/ab/Dummy.php"

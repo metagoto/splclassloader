@@ -89,7 +89,7 @@ zend_object_value splclassloader_create_object(zend_class_entry* class_type TSRM
 }
 
 
-/* {{{ proto void SplClassLoader::__construct([string namespace [, string path]])
+/* {{{ proto void SplClassLoader::__construct([string $namespace [, string $include_path]])
        Constructor */
 PHP_METHOD(SplClassLoader, __construct)
 {    
@@ -178,6 +178,7 @@ static int get_filename(splclassloader_object* obj, char* cl, int cl_len, char**
     char* ccl = cl;
     char* cns = obj->ns;
     char* cur = &cl[cl_len-1];
+    int   len = 0;
     
     if (cl_len < obj->ns_len) {
         return 0;
@@ -215,11 +216,11 @@ static int get_filename(splclassloader_object* obj, char* cl, int cl_len, char**
     }
     
     if (obj->inc_path) {  
-        int len = obj->inc_path_len + 1 + cl_len + obj->file_ext_len + 1;
+        len = obj->inc_path_len + 1 + cl_len + obj->file_ext_len + 1;
         *filename = emalloc(len);
         return snprintf(*filename, len, "%s%c%s%s", obj->inc_path, PHP_DIR_SEPARATOR, cl, obj->file_ext);
     }
-    int len = cl_len + obj->file_ext_len + 1;
+    len = cl_len + obj->file_ext_len + 1;
     *filename = emalloc(len);
     return snprintf(*filename, len, "%s%s", cl, obj->file_ext);
 }
@@ -273,12 +274,13 @@ static int get_filename_simple(splclassloader_object* obj, char* cl, int cl_len,
 PHP_METHOD(SplClassLoader, loadClass)
 {
     char* cl;
-    int   cl_len;
+    int   cl_len = 0;
     splclassloader_object* obj;
     char* filename = NULL;
     int   len = 0;
     
-    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &cl, &cl_len)) {
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &cl, &cl_len)
+        || !cl_len) {
         RETURN_FALSE;
     }
     
@@ -382,12 +384,13 @@ PHP_METHOD(SplClassLoader, getFileExtension)
 PHP_METHOD(SplClassLoader, getPath)
 {
     char* cl;
-    int   cl_len;
+    int   cl_len = 0;
     splclassloader_object* obj;
     char* filename = NULL;
     int   len = 0;
     
-    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &cl, &cl_len)) {
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &cl, &cl_len)
+        || !cl_len) {
         RETURN_FALSE;
     }
     

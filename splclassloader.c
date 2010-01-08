@@ -31,7 +31,8 @@
 ZEND_GET_MODULE(splclassloader)
 #endif
 
-#define SPLCLASSLD_NS_SEPARATOR '\\' 
+/* zend_API.h: #define ZEND_NS_NAME(ns, name)			ns"\\"name */
+#define SPLCLASSLD_NS_SEPARATOR '\\'
 
 
 static zend_class_entry* splclassloader_ce;
@@ -100,7 +101,7 @@ PHP_METHOD(SplClassLoader, __construct)
     splclassloader_object* obj;
     
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|ss", &ns, &ns_len, &inc_path, &inc_path_len)) {
-        return; //need to throw ??
+        return; // should throw ??
     }
     
     obj = (splclassloader_object *) zend_object_store_get_object(getThis() TSRMLS_CC);
@@ -172,8 +173,8 @@ PHP_METHOD(SplClassLoader, unregister)
 } /* }}} */
 
 
-/* allocate filename if ns and class match. returns filename len or 0 */
-static int get_filename(splclassloader_object* obj, char* cl, int cl_len, char** filename TSRMLS_DC)
+/* compute filename if ns and class match. returns filename len including '\0' or 0 */
+static int get_filename(splclassloader_object* obj, char* cl, int cl_len, char* filename TSRMLS_DC)
 {
     char* ccl = cl;
     char* cns = obj->ns;
@@ -217,12 +218,18 @@ static int get_filename(splclassloader_object* obj, char* cl, int cl_len, char**
     
     if (obj->inc_path) {  
         len = obj->inc_path_len + 1 + cl_len + obj->file_ext_len + 1;
-        *filename = emalloc(len);
-        return snprintf(*filename, len, "%s%c%s%s", obj->inc_path, PHP_DIR_SEPARATOR, cl, obj->file_ext);
+        if (len > MAXPATHLEN) {
+            return 0;
+        }
+        sprintf(filename, "%s%c%s%s", obj->inc_path, PHP_DIR_SEPARATOR, cl, obj->file_ext); // sprintf: we know the len
+        return len;
     }
     len = cl_len + obj->file_ext_len + 1;
-    *filename = emalloc(len);
-    return snprintf(*filename, len, "%s%s", cl, obj->file_ext);
+    if (len > MAXPATHLEN) {
+        return 0;
+    }
+    sprintf(filename, "%s%s", cl, obj->file_ext); // sprintf: we know the len
+    return len;
 }
 
 
@@ -276,7 +283,7 @@ PHP_METHOD(SplClassLoader, loadClass)
     char* cl;
     int   cl_len = 0;
     splclassloader_object* obj;
-    char* filename = NULL;
+    char  filename[MAXPATHLEN];
     int   len = 0;
     
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &cl, &cl_len)
@@ -286,7 +293,7 @@ PHP_METHOD(SplClassLoader, loadClass)
     
     obj = (splclassloader_object*) zend_object_store_get_object(getThis() TSRMLS_CC);
     
-    len = get_filename(obj, cl, cl_len, &filename TSRMLS_CC);
+    len = get_filename(obj, cl, cl_len, filename TSRMLS_CC);
     if (len) {
         zend_file_handle fh;
         fh.filename = filename;
@@ -294,7 +301,6 @@ PHP_METHOD(SplClassLoader, loadClass)
         fh.free_filename = 0;
         fh.type = ZEND_HANDLE_FILENAME;
         zend_execute_scripts(ZEND_INCLUDE TSRMLS_CC, NULL, 1, &fh);
-        efree(filename);
         RETURN_TRUE;
     }
     RETURN_FALSE;
@@ -386,7 +392,7 @@ PHP_METHOD(SplClassLoader, getPath)
     char* cl;
     int   cl_len = 0;
     splclassloader_object* obj;
-    char* filename = NULL;
+    char  filename[MAXPATHLEN];
     int   len = 0;
     
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &cl, &cl_len)
@@ -396,9 +402,9 @@ PHP_METHOD(SplClassLoader, getPath)
     
     obj = (splclassloader_object*) zend_object_store_get_object(getThis() TSRMLS_CC);
     
-    len = get_filename(obj, cl, cl_len, &filename TSRMLS_CC);
+    len = get_filename(obj, cl, cl_len, filename TSRMLS_CC);
     if (len) {
-        RETURN_STRINGL(filename, len, 0); // no efree
+        RETURN_STRINGL(filename, --len, 1); // cl_len > 0 and len includes '\0'
     }
     RETURN_FALSE;
 } /* }}} */

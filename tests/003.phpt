@@ -57,10 +57,16 @@ $c = new SplClassLoader('', '');
 var_dump($c->getPath('Dummy'));
 var_dump($c->getPath('ab\cd\ef'));
 var_dump($c->getPath('ab\cd\ef\rory\gallag_her'));
+var_dump($c->getPath('D'));
+var_dump($c->getPath(''));
+var_dump($c->getPath('/'));
+var_dump($c->getPath('_'));
+var_dump($c->getPath(42));
+var_dump($c->getPath());
 
 
 ?>
---EXPECT--
+--EXPECTF--
 string(9) "Dummy.php"
 string(12) "ab/Dummy.php"
 string(10) "Dum/my.php"
@@ -97,3 +103,11 @@ string(17) "ab/cd/ef/rory.php"
 string(9) "Dummy.php"
 string(12) "ab/cd/ef.php"
 string(28) "ab/cd/ef/rory/gallag/her.php"
+string(5) "D.php"
+bool(false)
+string(5) "/.php"
+string(5) "_.php"
+string(6) "42.php"
+
+Warning: SplClassLoader::getPath() expects exactly 1 parameter, 0 given in %s on line %s
+bool(false)

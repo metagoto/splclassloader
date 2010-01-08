@@ -15,6 +15,9 @@ var_dump($s->register());
 $d = new Dummy;
 
 var_dump($s->unregister());
+
+var_dump(spl_autoload_functions());
+
 var_dump($s->unregister());
 
 $d = new Dummyb;
@@ -25,6 +28,8 @@ $d = new Dummyb;
 bool(false)
 bool(true)
 bool(true)
+array(0) {
+}
 bool(false)
 
 Fatal error: Class 'Dummyb' not found in %ssplclassloader/tests/%s

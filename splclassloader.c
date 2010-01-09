@@ -101,7 +101,7 @@ PHP_METHOD(SplClassLoader, __construct)
     splclassloader_object* obj;
     
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|ss", &ns, &ns_len, &inc_path, &inc_path_len)) {
-        return; // should throw ??
+        return; /* should throw ? */
     }
     
     obj = (splclassloader_object *) zend_object_store_get_object(getThis() TSRMLS_CC);
@@ -173,7 +173,7 @@ PHP_METHOD(SplClassLoader, unregister)
 } /* }}} */
 
 
-/* compute filename if ns and class match. returns filename len including '\0' or 0 */
+/* compute filename if (partial) ns and class match. returns filename len including '\0' or 0 */
 static int get_filename(splclassloader_object* obj, char* cl, int cl_len, char* filename TSRMLS_DC)
 {
     char* ccl = cl;
@@ -182,11 +182,12 @@ static int get_filename(splclassloader_object* obj, char* cl, int cl_len, char* 
     int   len = 0;
     
     if (cl_len < obj->ns_len) {
-        return 0;
+        return 0; 
     }
     
+    /* we have a ns to compare to the qualified class name */
     if (obj->ns) {
-        int i = 0;
+        int i = 0; /* compare and transform ns separator in place */
         for ( ; i < obj->ns_len; ++i) {
             if (*cns != *ccl) {
                 return 0;
@@ -202,6 +203,8 @@ static int get_filename(splclassloader_object* obj, char* cl, int cl_len, char* 
         }
         *ccl = PHP_DIR_SEPARATOR;
     }
+    
+    /* transform '_' in the class name from right to left */
     for ( ; cur != ccl; --cur) {
         if (*cur == SPLCLASSLD_NS_SEPARATOR) {
             break;
@@ -210,6 +213,8 @@ static int get_filename(splclassloader_object* obj, char* cl, int cl_len, char* 
             *cur = PHP_DIR_SEPARATOR;
         }
     }
+    
+    /* tranform the remaining ns separator from right to left */
     for ( ; cur != ccl; --cur) {
         if (*cur == SPLCLASSLD_NS_SEPARATOR) {
             *cur = PHP_DIR_SEPARATOR;
@@ -221,59 +226,18 @@ static int get_filename(splclassloader_object* obj, char* cl, int cl_len, char* 
         if (len > MAXPATHLEN) {
             return 0;
         }
-        sprintf(filename, "%s%c%s%s", obj->inc_path, PHP_DIR_SEPARATOR, cl, obj->file_ext); // sprintf: we know the len
+        /* sprintf: we know the len */
+        sprintf(filename, "%s%c%s%s", obj->inc_path, PHP_DIR_SEPARATOR, cl, obj->file_ext);
         return len;
     }
     len = cl_len + obj->file_ext_len + 1;
     if (len > MAXPATHLEN) {
         return 0;
     }
-    sprintf(filename, "%s%s", cl, obj->file_ext); // sprintf: we know the len
+    /* sprintf: we know the len */
+    sprintf(filename, "%s%s", cl, obj->file_ext);
     return len;
 }
-
-
-/* not used. does not transform '_' in class names */
-#if 0
-static int get_filename_simple(splclassloader_object* obj, char* cl, int cl_len, char** filename TSRMLS_DC)
-{
-    char* ccl = cl;
-    char* cns = obj->ns;
-    char* cur = &cl[cl_len-1];
-    
-    if (cl_len < obj->ns_len) {
-        return 0;
-    }
-    
-    if (obj->ns) {
-        int i  = 0;
-        for ( ; i < obj->ns_len; ++i) {
-            if (*cns != *ccl) {
-                return 0;
-            }
-            if (*ccl == SPLCLASSLD_NS_SEPARATOR) {
-                *ccl = PHP_DIR_SEPARATOR;
-            }
-            ++ccl;
-            ++cns;
-        }
-        if (*ccl != SPLCLASSLD_NS_SEPARATOR) {
-            return 0;
-        }
-        *ccl = PHP_DIR_SEPARATOR;
-    }
-    for ( ; cur != ccl; --cur) {
-        if (*cur == SPLCLASSLD_NS_SEPARATOR) {
-            *cur = PHP_DIR_SEPARATOR;
-        }
-    }
-    
-    if (obj->inc_path) {
-        return spprintf(filename, 0, "%s%c%s%s", obj->inc_path, PHP_DIR_SEPARATOR, cl, obj->file_ext);
-    }
-    return spprintf(filename, 0, "%s%s", cl, obj->file_ext);
-}
-#endif /* 0 */
 
 
 /* {{{ proto bool SplClassLoader::loadClass(string $class_name)
@@ -282,15 +246,15 @@ PHP_METHOD(SplClassLoader, loadClass)
 {
     char* cl;
     int   cl_len = 0;
-    splclassloader_object* obj;
     char  filename[MAXPATHLEN];
     int   len = 0;
+    splclassloader_object* obj;
     
-    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &cl, &cl_len)
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s/", &cl, &cl_len) /* zval separation is required */
         || !cl_len) {
         RETURN_FALSE;
     }
-    
+   
     obj = (splclassloader_object*) zend_object_store_get_object(getThis() TSRMLS_CC);
     
     len = get_filename(obj, cl, cl_len, filename TSRMLS_CC);
@@ -386,14 +350,14 @@ PHP_METHOD(SplClassLoader, getFileExtension)
 
 
 /* {{{ proto mixed SplClassLoader::getPath(string $class_name)
-   Gets the path for the given class */
+   Gets the path for the given class. Does not load anything. This is just a handy method */
 PHP_METHOD(SplClassLoader, getPath)
 {
     char* cl;
     int   cl_len = 0;
-    splclassloader_object* obj;
     char  filename[MAXPATHLEN];
     int   len = 0;
+    splclassloader_object* obj;
     
     if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &cl, &cl_len)
         || !cl_len) {
@@ -404,7 +368,7 @@ PHP_METHOD(SplClassLoader, getPath)
     
     len = get_filename(obj, cl, cl_len, filename TSRMLS_CC);
     if (len) {
-        RETURN_STRINGL(filename, --len, 1); // cl_len > 0 and len includes '\0'
+        RETURN_STRINGL(filename, --len, 1); /* cl_len > 0 and len includes '\0' */
     }
     RETURN_FALSE;
 } /* }}} */
@@ -437,7 +401,7 @@ PHP_MINIT_FUNCTION(splclassloader)
     splclassloader_ce->create_object = splclassloader_create_object;
 
     memcpy(&splclassloader_object_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
-    splclassloader_object_handlers.clone_obj = NULL; // no cloning!
+    splclassloader_object_handlers.clone_obj = NULL; /* no cloning! */
 
     return SUCCESS;
 }
@@ -446,7 +410,7 @@ PHP_MINFO_FUNCTION(splclassloader)
 {
     php_info_print_table_start ();
     php_info_print_table_header(2, "SplClassLoader support", "enabled");
-    php_info_print_table_row   (2, "Conformance", "PSR-0 (kinda;)");
+    php_info_print_table_row   (2, "Conformance", "PSR-0");
     php_info_print_table_end   ();
 }
 
@@ -454,7 +418,7 @@ PHP_MINFO_FUNCTION(splclassloader)
 zend_module_entry splclassloader_module_entry = {
     STANDARD_MODULE_HEADER,
     "SplClassLoader",
-    NULL, //splclassloader_functions,
+    NULL, /*splclassloader_functions, */
     PHP_MINIT(splclassloader),
     NULL,
     NULL,

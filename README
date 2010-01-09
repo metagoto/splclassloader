@@ -1,9 +1,8 @@
 SplClassLoader php extension
 
+Requires php 5.3+
 Implements http://groups.google.com/group/php-standards/web/psr-0-final-proposal
-
-Original php implementation:
-http://gist.github.com/221634
+Original php implementation: http://gist.github.com/221634
 
 /**
 * SplClassLoader implementation that implements the technical interoperability
@@ -22,3 +21,28 @@ http://gist.github.com/221634
 * @author Kris Wallsmith <kris.wallsmith@gmail.com>
 * @author Fabien Potencier <fabien.potencier@symfony-project.org>
 */
+
+
+INSTALLATION
+------------
+
+phpize and php-config must be in your PATH.
+If not, please specify their full path in the following commands.
+
+$ cd splclassloader
+
+$ phpize
+(or /path/to/phpize if phpize is not in your path)
+
+$ ./configure 
+(or ./configure --with-php-config=/path/to/php-config 
+if php-config is not in your path)
+
+$ make
+
+$ cp modules/splclassloader.so /to/wherever/you/want/it
+
+Add the following line to php.ini:
+zend_extension="/wherever/you/put/it/splclassloader.so"
+
+Restart your webserver

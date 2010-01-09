@@ -24,7 +24,6 @@ var_dump(class_exists('ns1\Dummy1', false));
 var_dump(class_exists('ns1\ns2\Dummy2', false));
 var_dump(class_exists('Dummyc', false));
 
-
 ?>
 --EXPECTF--
 bool(true)

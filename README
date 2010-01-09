@@ -43,6 +43,6 @@ $ make
 $ cp modules/splclassloader.so /to/wherever/you/want/it
 
 Add the following line to php.ini:
-zend_extension="/wherever/you/put/it/splclassloader.so"
+extension="/wherever/you/put/it/splclassloader.so"
 
 Restart your webserver

@@ -26,11 +26,6 @@
 #include "zend_interfaces.h"
 
 #include "spl_classloader.h"
-#include "php_spl.h"
-#include "spl_engine.h"
-#include "spl_functions.h"
-#include "spl_exceptions.h"
-
 
 #ifdef COMPILE_DL_SPLCLASSLOADER
 ZEND_GET_MODULE(splclassloader)
@@ -39,10 +34,8 @@ ZEND_GET_MODULE(splclassloader)
 /* zend_API.h: #define ZEND_NS_NAME(ns, name)			ns"\\"name */
 #define SPLCLASSLD_NS_SEPARATOR '\\'
 
-
 static zend_class_entry* splclassloader_ce;
 zend_object_handlers splclassloader_object_handlers;
-
 
 typedef struct _splclassloader_object { 
     zend_object std;
@@ -74,26 +67,36 @@ static void splclassloader_object_dtor(void* object, zend_object_handle handle T
     efree(obj);
 }
 
-
-zend_object_value splclassloader_create_object(zend_class_entry* class_type TSRMLS_DC)
+zend_object_value spl_object_classloader_new_ex(zend_class_entry *class_type, splclassloader_object **obj, zval *orig TSRMLS_DC) /* {{{ */
 {
     zend_object_value retval;
+    splclassloader_object *intern;
 
-    splclassloader_object* obj = (splclassloader_object*)emalloc(sizeof(splclassloader_object));
-    memset(obj, 0, sizeof(splclassloader_object));
+    intern = emalloc(sizeof(splclassloader_object));
+    memset(intern, 0, sizeof(splclassloader_object));
+    *obj = intern;
 
-    zend_object_std_init(&obj->std, class_type TSRMLS_CC);
-    zend_hash_copy(obj->std.properties, &class_type->default_properties, (copy_ctor_func_t) zval_add_ref, (void*)0, sizeof(zval*));
+    zend_object_std_init(&intern->std, class_type TSRMLS_CC);
+    object_properties_init(&intern->std, class_type);
 
-    obj->file_ext = estrndup(".php", sizeof(".php")-1);
-    obj->file_ext_len = sizeof(".php")-1;
-    
-    retval.handle = zend_objects_store_put(obj, (zend_objects_store_dtor_t)zend_objects_destroy_object, (void*)splclassloader_object_dtor, NULL TSRMLS_CC);
+    //zend_hash_copy(intern->std.properties, &class_type->default_properties, (copy_ctor_func_t) zval_add_ref, (void*)NULL, sizeof(zval*));
+
+    intern->file_ext = estrndup(".php", sizeof(".php")-1);
+    intern->file_ext_len = sizeof(".php")-1;
+
+    retval.handle = zend_objects_store_put(intern, (zend_objects_store_dtor_t)zend_objects_destroy_object, (void*)splclassloader_object_dtor, NULL TSRMLS_CC);
     retval.handlers = &splclassloader_object_handlers;
 
     return retval;
-}
+} /* }}} */
 
+/* {{{ splclassloader_create_object */
+static zend_object_value splclassloader_create_object(zend_class_entry *class_type TSRMLS_DC)
+{
+	splclassloader_object *tmp;
+    return spl_object_classloader_new_ex(class_type, &tmp, NULL TSRMLS_CC);
+}
+/* }}} */
 
 /* {{{ proto void SplClassLoader::__construct([string $namespace [, string $include_path]])
        Constructor */

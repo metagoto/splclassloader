@@ -2,5 +2,5 @@
 ARG_ENABLE("splclassloader", "enable splclassloader support", "no");
 
 if (PHP_SPLCLASSLOADER != "no") {
-  EXTENSION("splclassloader", "splclassloader.c");
+  EXTENSION("splclassloader", "spl_classloader.c");
 }

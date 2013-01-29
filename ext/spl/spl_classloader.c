@@ -24,7 +24,7 @@
 #include "php_ini.h"
 #include "ext/standard/info.h"
 #include "zend_interfaces.h"
-#include "php_splclassloader.h"
+#include "spl_classloader.h"
 
 
 #ifdef COMPILE_DL_SPLCLASSLOADER

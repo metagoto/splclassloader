@@ -419,6 +419,9 @@ PHP_MINFO_FUNCTION(splclassloader)
     php_info_print_table_start ();
     php_info_print_table_header(2, "SplClassLoader support", "enabled");
     php_info_print_table_row   (2, "Conformance", "PSR-0");
+    php_info_print_table_row   (2, "Version", "0.2");
+    php_info_print_table_row   (2, "Author", "David Coallier <davidc@php.net>");
+    php_info_print_table_row   (2, "Author", "Marcel Araujo <admin@marcelaraujo.me>");
     php_info_print_table_end   ();
 }
 
@@ -432,6 +435,6 @@ zend_module_entry splclassloader_module_entry = {
     NULL,
     NULL,
     PHP_MINFO(splclassloader),
-    "0.1",
+    "0.2",
     STANDARD_MODULE_PROPERTIES
 };

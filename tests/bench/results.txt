@@ -1,0 +1,7 @@
+Running on a PHP 5.4.11 enviroment
+
+SplClassLoader PHP Class 0.001
+Memory Usage: 33456 bytes
+
+SplClassLoader PHP Native 0.001
+Memory Usage: 13536 bytes
